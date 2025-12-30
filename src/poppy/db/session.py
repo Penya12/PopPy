@@ -1,5 +1,6 @@
 """Creates the engine and sessionmaker for DB access. Used by the entire application."""
 from __future__ import annotations
+from typing import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -30,3 +31,13 @@ SESSION_LOCAL = sessionmaker(bind=ENGINE, autoflush=False, autocommit=False, fut
 
 def get_session() -> Session:
     return SESSION_LOCAL()
+
+
+def get_db_connection() -> Generator[Session, None, None]:
+    """This function will provide a secure connection to both fastAPI and CLI, and prevent using
+    the try...finally block everywhere."""
+    session = get_session()
+    try:
+        yield session
+    finally:
+        session.close()

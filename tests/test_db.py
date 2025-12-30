@@ -1,8 +1,11 @@
+import pytest
 from sqlalchemy import Engine, text
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect
 
 from poppy.db.models import EXPECTED_TABLES_IN_DB, Event
+import poppy.db.session as db_session_module
+from unittest.mock import MagicMock
 
 
 def test_mock_db_is_alive(db_session: Session) -> None:
@@ -23,3 +26,24 @@ def test_model_and_mock_db_events_table_match(engine: Engine) -> None:
     assert columns_in_db == columns_in_model, (
         f"Mismatch in `{Event.__name__}` model and `{Event.__tablename__}` table columns in the test database {columns_in_db=}, {columns_in_model=}"
     )
+
+
+def test_get_db_connection_closes_session(monkeypatch) -> None:
+    mock_session = MagicMock()
+
+    # Make get_session() return our fake session
+    monkeypatch.setattr(db_session_module, "get_session", lambda: mock_session)
+
+    # Consume the generator
+    gen = db_session_module.get_db_connection()
+    session = next(gen)
+
+    assert session is mock_session
+
+    # Finish the generator -> triggers finally block
+    with pytest.raises(StopIteration):
+        next(gen)
+
+    # Assert cleanup happened
+    mock_session.close.assert_called_once()
+
