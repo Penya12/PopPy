@@ -15,6 +15,7 @@ from poppy.db.session import (
 from poppy.services.event_handlers import create_event, list_week
 
 app = typer.Typer(help="poppy (POP): your Popeye-powered secretary")
+DEFAULT_TAGS = typer.Option([], "--tags", help="Repeat --tags for multiple values (e.g. --tags foo --tags bar)")
 
 
 @app.command()
@@ -24,11 +25,9 @@ def add(
     ),
     text: str = typer.Argument(...),
     why: str | None = typer.Option(None, "--why"),
-    tags: list[str] = typer.Option(
-        [], "--tags", help="Repeat --tags for multiple values (e.g. --tags foo --tags bar)"
-    ),
+    tags: list[str] | None = DEFAULT_TAGS,
     meta: str | None = typer.Option(None, "--meta", help="JSON string, e.g. '{\"url\": \"...\"}'"),
-):
+) -> None:
     """Add an event (action/decision/idea/paper/note/meeting)."""
     meta_obj = {}
     if meta:

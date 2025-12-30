@@ -1,4 +1,6 @@
 """Skeleton setup required for the fastAPI app."""
+from typing import Annotated
+
 from fastapi import Depends, FastAPI, status
 from sqlalchemy.orm import Session
 
@@ -16,6 +18,6 @@ def read_root() -> dict[str, str]:
 
 
 @app.post("/event", status_code=status.HTTP_201_CREATED)
-def create_event_via_fastapi(payload: EventCreate, session: Session = Depends(get_db_connection)) -> EventRead:
+def create_event_via_fastapi(payload: EventCreate, session: Annotated[Session, Depends(get_db_connection)]) -> EventRead:
     """Thin wrapper around create_event for FastAPI."""
     return create_event(session, payload)
