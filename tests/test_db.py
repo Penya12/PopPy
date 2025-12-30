@@ -2,7 +2,7 @@ from sqlalchemy import Engine, text
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect
 
-from poppy.db.models import EXPECTED_TABLES_IN_DB
+from poppy.db.models import EXPECTED_TABLES_IN_DB, Event
 
 
 def test_mock_db_is_alive(db_session: Session) -> None:
@@ -14,3 +14,12 @@ def test_mock_db_has_events_table(engine: Engine) -> None:
     table_names = inspector.get_table_names()
     for expected_table in EXPECTED_TABLES_IN_DB:
         assert expected_table in table_names, f"{expected_table} table is missing in the test database"
+
+
+def test_model_and_mock_db_events_table_match(engine: Engine) -> None:
+    inspector = inspect(engine)
+    columns_in_db = {col["name"] for col in inspector.get_columns("events")}
+    columns_in_model = set(Event.__table__.columns.keys())
+    assert columns_in_db == columns_in_model, (
+        f"Mismatch in `{Event.__name__}` model and `{Event.__tablename__}` table columns in the test database {columns_in_db=}, {columns_in_model=}"
+    )

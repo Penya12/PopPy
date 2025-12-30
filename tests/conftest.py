@@ -3,6 +3,11 @@ import pytest
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import sessionmaker
 from testcontainers.postgres import PostgresContainer
+from alembic import command
+from alembic.config import Config
+
+from poppy.db.session import ALEMBIC_INI_PATH
+
 
 # If your project uses postgresql+psycopg, keep it consistent:
 DRIVER_PREFIX = "postgresql+psycopg"
@@ -45,11 +50,7 @@ def apply_migrations(postgres_url):
     Apply Alembic migrations to the test DB once at the start.
     This ensures your migrations are always valid.
     """
-    # Option A: run alembic via its command API
-    from alembic import command
-    from alembic.config import Config
-
-    alembic_cfg = Config("alembic.ini")
+    alembic_cfg = Config(ALEMBIC_INI_PATH.as_posix())
     # Ensure alembic uses the test DB URL
     alembic_cfg.set_main_option("sqlalchemy.url", postgres_url)
 

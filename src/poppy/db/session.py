@@ -1,4 +1,4 @@
-# src/poppy/db/session.py
+"""Creates the engine and sessionmaker for DB access. Used by the entire application."""
 from __future__ import annotations
 
 from sqlalchemy import create_engine
@@ -8,6 +8,7 @@ from pathlib import Path
 
 
 DEFAULT_ENV_FILE_PATH = Path(__file__).parents[3] / ".env"
+ALEMBIC_INI_PATH = Path(__file__).parents[3] / "alembic.ini"
 
 
 def get_database_url_from_env_file(env_file_path: Path = DEFAULT_ENV_FILE_PATH) -> str:
