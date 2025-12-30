@@ -39,3 +39,38 @@ testpaths = ["tests"]
 [build-system]
 requires = ["uv_build>=0.9.4,<0.10.0"]
 build-backend = "uv_build"
+
+[tool.ruff.lint]
+extend-select = ["ALL"]
+ignore = [
+    "A005", # shadowing stlib module names
+    "B905", # zip without explicit strict=
+    "D205", # Docstrings formatting
+    "S101", # Assertion errors
+    "S604", # usage of a parameter called 'shell'
+    "TC002", # false alarms on TYPE_CHECKING imports
+    "TC001",
+    "TC003",
+    "E501", # line too long
+    "ISC001", # Recommended disable single-line-implicit-string-concatenation
+    "RET501", # unnecessary-return-none
+    "N818", # error-suffix-on-exception-name
+    "ANN401", # flake8-annotations any-type
+    "PLR0911", # Complexity rules, better handled by C901
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+    "PLR1711", # useless-return
+    "S603", # subprocess call
+    "FIX", # flake8-fixme
+    "COM812" # Recommended disable missing-trailing-comma
+]
+per-file-ignores = { "tests/*" = ["D", "INP", "PLR2004", "SLF"]}
+isort.split-on-trailing-comma = false
+
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+
+[tool.codespell]
+skip = ["pyproject.toml"]
+ignore-words-list = "ser,nd,cna,te,nmae,dscribe,mape,empress,EMPRESS,greif,nife,nin,afterAll"

@@ -1,11 +1,13 @@
-from typing import Generator
+from collections.abc import Generator
+
 import pytest
-from sqlalchemy import Engine
-from testcontainers.postgres import PostgresContainer
-from alembic import command
 from alembic.config import Config
+from sqlalchemy import Engine
+from sqlalchemy.orm import Session
+from testcontainers.postgres import PostgresContainer
 
 import poppy.db.session as db_session_module
+from alembic import command
 from poppy.services.utils import ALEMBIC_INI_PATH
 
 # If your project uses postgresql+psycopg, keep it consistent:
@@ -25,8 +27,7 @@ def get_postgres_url_for_tests(container: PostgresContainer) -> str:
 
 @pytest.fixture(scope="session")
 def postgres_url() -> Generator[str, None, None]:
-    """
-    Starts a temporary Postgres container for the whole test session
+    """Starts a temporary Postgres container for the whole test session
     and returns a SQLAlchemy-compatible DATABASE_URL.
     """
     with PostgresContainer("postgres:14-alpine") as pg:
@@ -41,16 +42,14 @@ def init_test_db(postgres_url: str) -> None:
 
 @pytest.fixture(scope="session")
 def engine() -> Engine:
-    """
-    Creates a SQLAlchemy engine connected to the testcontainer DB.
+    """Creates a SQLAlchemy engine connected to the testcontainer DB.
     """
     return db_session_module.ENGINE
 
 
 @pytest.fixture(scope="session", autouse=True)
-def apply_migrations(postgres_url):
-    """
-    Apply Alembic migrations to the test DB once at the start.
+def apply_migrations(postgres_url: str) -> None:
+    """Apply Alembic migrations to the test DB once at the start.
     This ensures your migrations are always valid.
     """
     alembic_cfg = Config(ALEMBIC_INI_PATH.as_posix())
@@ -60,18 +59,17 @@ def apply_migrations(postgres_url):
     command.upgrade(alembic_cfg, "head")
 
 
-@pytest.fixture()
-def db_session():
-    """
-    Provides a DB session per test, isolated by a transaction rollback.
+@pytest.fixture
+def db_session() -> Generator[Session, None, None]:
+    """Provides a DB session per test, isolated by a transaction rollback.
     In the tests pass this fixture as an argument to get a session.
     Note: Unlike production this does NOT need to be passed as a context manager.
     """
     connection = db_session_module.ENGINE.connect()
     transaction = connection.begin()
-    SessionLocal = db_session_module.sessionmaker(bind=connection, autoflush=False, autocommit=False, future=True)
+    session_local = db_session_module.sessionmaker(bind=connection, autoflush=False, autocommit=False, future=True)
 
-    session = SessionLocal()
+    session = session_local()
     try:
         yield session
     finally:

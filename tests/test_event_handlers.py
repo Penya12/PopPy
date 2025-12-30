@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+
+from sqlalchemy.orm import Session
+
 from poppy.core.events import EventCreate
 from poppy.db.models import Event
 from poppy.services.event_handlers import create_event, list_events_between, list_week
-from sqlalchemy.orm import Session
-
 from poppy.services.utils import week_bounds
 
 
@@ -20,7 +21,7 @@ def test_create_event(db_session: Session) -> None:
 
     created_event = create_event(db_session, payload)
     assert created_event.id is not None
-    
+
     fetched_event = db_session.get(Event, created_event.id)
     assert fetched_event is not None
     assert fetched_event.kind == payload.kind
@@ -32,8 +33,8 @@ def test_create_event(db_session: Session) -> None:
     assert fetched_event.created_at == created_event.created_at
 
 
-def test_list_events_between(db_session: Session) -> None: 
-    now = datetime.now(timezone.utc)
+def test_list_events_between(db_session: Session) -> None:
+    now = datetime.now(UTC)
     # Insert three events by directly setting created_at so the test is deterministic
     e1 = Event(kind="note", text="old", created_at=now - timedelta(days=10), tags=[], meta={})
     e2 = Event(kind="action", text="in range 1", created_at=now - timedelta(days=2), tags=[], meta={})

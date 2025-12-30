@@ -1,11 +1,11 @@
-import pytest
-from sqlalchemy import Engine, text
-from sqlalchemy.orm import Session
-from sqlalchemy import inspect
-
-from poppy.db.models import EXPECTED_TABLES_IN_DB, Event
-import poppy.db.session as db_session_module
 from unittest.mock import MagicMock
+
+import pytest
+from sqlalchemy import Engine, inspect, text
+from sqlalchemy.orm import Session
+
+import poppy.db.session as db_session_module
+from poppy.db.models import EXPECTED_TABLES_IN_DB, Event
 
 
 def test_mock_db_is_alive(db_session: Session) -> None:
@@ -28,7 +28,7 @@ def test_model_and_mock_db_events_table_match(engine: Engine) -> None:
     )
 
 
-def test_session_scope_closes_session(monkeypatch):
+def test_session_scope_closes_session(monkeypatch: pytest.MonkeyPatch) -> None:
     mock_session = MagicMock()
     monkeypatch.setattr(db_session_module, "get_session", lambda: mock_session)
 
@@ -38,7 +38,7 @@ def test_session_scope_closes_session(monkeypatch):
     mock_session.close.assert_called_once()
 
 
-def test_get_db_connection_closes_session(monkeypatch) -> None:
+def test_get_db_connection_closes_session(monkeypatch: pytest.MonkeyPatch) -> None:
     mock_session = MagicMock()
     # Make get_session() return our fake session
     monkeypatch.setattr(db_session_module, "get_session", lambda: mock_session)
