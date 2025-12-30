@@ -2,16 +2,18 @@
 # src/poppy/services/events.py
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from poppy.db.models import Event
 from poppy.core.events import EventCreate
+from poppy.services.utils import week_bounds
 
 
 def create_event(session: Session, payload: EventCreate) -> Event:
+    """The API and the CLI should use this to create events in the DB."""
     ev = Event(
         kind=payload.kind,
         text=payload.text,
@@ -26,19 +28,8 @@ def create_event(session: Session, payload: EventCreate) -> Event:
     return ev
 
 
-def week_bounds(anchor: date | None = None) -> tuple[datetime, datetime]:
-    """
-    ISO week (Mon..Mon). anchor defaults to today (UTC date).
-    """
-    if anchor is None:
-        anchor = datetime.now(timezone.utc).date()
-    monday = anchor - timedelta(days=anchor.weekday())
-    start = datetime(monday.year, monday.month, monday.day, tzinfo=timezone.utc)
-    end = start + timedelta(days=7)
-    return start, end
-
-
 def list_events_between(session: Session, start: datetime, end: datetime) -> list[Event]:
+    """Lists events created on or after `start` and before `end`."""
     stmt = (
         select(Event)
         .where(Event.created_at >= start, Event.created_at < end)
