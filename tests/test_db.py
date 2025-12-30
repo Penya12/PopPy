@@ -5,6 +5,7 @@ from sqlalchemy import Engine, inspect, text
 from sqlalchemy.orm import Session
 
 import poppy.db.session as db_session_module
+from poppy.core.events import EventRead
 from poppy.db.models import EXPECTED_TABLES_IN_DB, Event
 
 
@@ -25,6 +26,14 @@ def test_model_and_mock_db_events_table_match(engine: Engine) -> None:
     columns_in_model = set(Event.__table__.columns.keys())
     assert columns_in_db == columns_in_model, (
         f"Mismatch in `{Event.__name__}` model and `{Event.__tablename__}` table columns in the test database {columns_in_db=}, {columns_in_model=}"
+    )
+
+
+def test_model_and_pydantic_event_fields_match() -> None:
+    event_model_fields = set(Event.__table__.columns.keys())
+    pydantic_fields = set(EventRead.model_fields.keys())
+    assert event_model_fields == pydantic_fields, (
+        f"Mismatch in `{Event.__name__}` model and `EventRead` Pydantic model fields {event_model_fields=}, {pydantic_fields=}"
     )
 
 
