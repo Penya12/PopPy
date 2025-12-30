@@ -51,7 +51,10 @@ def week():
         events = list_week(connected_session)
     for ev in events:
         ts = ev.created_at.isoformat(timespec="minutes")
-        typer.echo(f"{ts}  [{ev.kind}]  {ev.text}")
+        if ev.why:
+            typer.echo(f"{ts}  [{ev.kind}]  {ev.text} because {ev.why}")
+        else:
+            typer.echo(f"{ts}  [{ev.kind}]  {ev.text}")
 
 
 @app.callback()
