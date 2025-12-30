@@ -14,10 +14,14 @@ app = typer.Typer(help="poppy (POP): your Popeye-powered secretary")
 
 @app.command()
 def add(
-    kind: str = typer.Option(..., "--kind"),
+    kind: str = typer.Option(
+        ..., "--kind", help="Available kinds: action, decision, idea, paper, note, meeting"
+    ),
     text: str = typer.Argument(...),
     why: str | None = typer.Option(None, "--why"),
-    tags: list[str] = typer.Option([], "--tags"),
+    tags: list[str] = typer.Option(
+        [], "--tags", help="Repeat --tags for multiple values (e.g. --tags foo --tags bar)"
+    ),
     meta: str | None = typer.Option(None, "--meta", help="JSON string, e.g. '{\"url\": \"...\"}'"),
 ):
     """
