@@ -1,6 +1,7 @@
 """Skeleton setup required for the fastAPI app."""
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from datetime import date
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, status
@@ -13,7 +14,7 @@ from poppy.db.session import (
     get_db_connection,
     init_db_engine_and_sessionmaker,
 )
-from poppy.services.event_handlers import create_event
+from poppy.services.event_handlers import create_event, list_week
 
 
 @asynccontextmanager
@@ -41,3 +42,9 @@ def read_root() -> dict[str, str]:
 def create_event_via_fastapi(payload: EventCreate, session: Annotated[Session, Depends(get_db_connection)]) -> EventRead:
     """Thin wrapper around `create_event` for FastAPI."""
     return create_event(session, payload)
+
+
+@app.get("/event/week")
+def get_events_in_week(session: Annotated[Session, Depends(get_db_connection)], anchor: date | None = None) -> list[EventRead]:
+    """Thin wrapper around `list_week` for FastAPI."""
+    return list_week(session, anchor=anchor)
