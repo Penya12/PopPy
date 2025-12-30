@@ -39,23 +39,21 @@ def engine(postgres_url) -> Generator[Engine, None, None]:
     eng.dispose()
 
 
-# @pytest.fixture(scope="session", autouse=True)
-# def apply_migrations(postgres_url):
-#     """
-#     Apply Alembic migrations to the test DB once at the start.
-#     This ensures your migrations are always valid.
-#     """
-#     os.environ["DATABASE_URL"] = postgres_url
+@pytest.fixture(scope="session", autouse=True)
+def apply_migrations(postgres_url):
+    """
+    Apply Alembic migrations to the test DB once at the start.
+    This ensures your migrations are always valid.
+    """
+    # Option A: run alembic via its command API
+    from alembic import command
+    from alembic.config import Config
 
-#     # Option A: run alembic via its command API
-#     from alembic import command
-#     from alembic.config import Config
+    alembic_cfg = Config("alembic.ini")
+    # Ensure alembic uses the test DB URL
+    alembic_cfg.set_main_option("sqlalchemy.url", postgres_url)
 
-#     alembic_cfg = Config("alembic.ini")
-#     # Ensure alembic uses the test DB URL
-#     alembic_cfg.set_main_option("sqlalchemy.url", postgres_url)
-
-#     command.upgrade(alembic_cfg, "head")
+    command.upgrade(alembic_cfg, "head")
 
 
 @pytest.fixture()
