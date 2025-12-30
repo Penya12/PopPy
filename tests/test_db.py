@@ -28,16 +28,24 @@ def test_model_and_mock_db_events_table_match(engine: Engine) -> None:
     )
 
 
+def test_session_scope_closes_session(monkeypatch):
+    mock_session = MagicMock()
+    monkeypatch.setattr(db_session_module, "get_session", lambda: mock_session)
+
+    with db_session_module.session_scope() as s:
+        assert s is mock_session
+
+    mock_session.close.assert_called_once()
+
+
 def test_get_db_connection_closes_session(monkeypatch) -> None:
     mock_session = MagicMock()
-
     # Make get_session() return our fake session
     monkeypatch.setattr(db_session_module, "get_session", lambda: mock_session)
 
     # Consume the generator
     gen = db_session_module.get_db_connection()
     session = next(gen)
-
     assert session is mock_session
 
     # Finish the generator -> triggers finally block

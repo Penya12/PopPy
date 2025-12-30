@@ -5,7 +5,7 @@ import json
 import typer
 from pydantic import ValidationError
 
-from poppy.db.session import get_db_connection
+from poppy.db.session import DATABASE_URL, init_db_engine_and_sessionmaker, session_scope
 from poppy.core.events import EventCreate
 from poppy.services.event_handlers import create_event, list_week
 
@@ -37,9 +37,9 @@ def add(
         typer.echo(str(e))
         raise typer.Exit(code=2)
 
-    connected_session = get_db_connection()
-    ev = create_event(connected_session, payload)
-    typer.echo(f"Saved #{ev.id} [{ev.kind}] {ev.text}")
+    with session_scope() as connected_session:
+        ev = create_event(connected_session, payload)
+        typer.echo(f"Saved #{ev.id} [{ev.kind}] {ev.text}")
     
 
 @app.command()
@@ -47,8 +47,15 @@ def week():
     """
     Show this week's events (UTC week).
     """
-    connected_session = get_db_connection()
-    events = list_week(connected_session)
+    with session_scope() as connected_session:
+        events = list_week(connected_session)
     for ev in events:
         ts = ev.created_at.isoformat(timespec="minutes")
         typer.echo(f"{ts}  [{ev.kind}]  {ev.text}")
+
+
+@app.callback()
+def main() -> None:
+    # runs for every command
+    init_db_engine_and_sessionmaker(DATABASE_URL)
+

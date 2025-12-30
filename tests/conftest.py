@@ -1,13 +1,12 @@
 from typing import Generator
 import pytest
-from sqlalchemy import Engine, create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Engine
 from testcontainers.postgres import PostgresContainer
 from alembic import command
 from alembic.config import Config
 
-from poppy.db.session import ALEMBIC_INI_PATH
-
+import poppy.db.session as db_session_module
+from poppy.services.utils import ALEMBIC_INI_PATH
 
 # If your project uses postgresql+psycopg, keep it consistent:
 DRIVER_PREFIX = "postgresql+psycopg"
@@ -34,14 +33,18 @@ def postgres_url() -> Generator[str, None, None]:
         yield get_postgres_url_for_tests(pg)
 
 
+@pytest.fixture(scope="session", autouse=True)
+def init_test_db(postgres_url: str) -> None:
+    """Initialize the database engine and sessionmaker for tests."""
+    db_session_module.init_db_engine_and_sessionmaker(database_url=postgres_url)
+
+
 @pytest.fixture(scope="session")
-def engine(postgres_url) -> Generator[Engine, None, None]:
+def engine() -> Engine:
     """
     Creates a SQLAlchemy engine connected to the testcontainer DB.
     """
-    eng = create_engine(postgres_url, future=True)
-    yield eng
-    eng.dispose()
+    return db_session_module.ENGINE
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -58,16 +61,17 @@ def apply_migrations(postgres_url):
 
 
 @pytest.fixture()
-def db_session(engine: Engine):
+def db_session():
     """
     Provides a DB session per test, isolated by a transaction rollback.
+    In the tests pass this fixture as an argument to get a session.
+    Note: Unlike production this does NOT need to be passed as a context manager.
     """
-    connection = engine.connect()
+    connection = db_session_module.ENGINE.connect()
     transaction = connection.begin()
+    SessionLocal = db_session_module.sessionmaker(bind=connection, autoflush=False, autocommit=False, future=True)
 
-    SessionLocal = sessionmaker(bind=connection, autoflush=False, autocommit=False, future=True)
     session = SessionLocal()
-
     try:
         yield session
     finally:
