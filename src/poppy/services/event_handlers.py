@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -27,7 +26,7 @@ def create_event(session: Session, payload: EventCreate) -> Event:
     return ev
 
 
-def week_bounds(anchor: Optional[date] = None) -> tuple[datetime, datetime]:
+def week_bounds(anchor: date | None = None) -> tuple[datetime, datetime]:
     """
     ISO week (Mon..Mon). anchor defaults to today (UTC date).
     """
@@ -48,6 +47,6 @@ def list_events_between(session: Session, start: datetime, end: datetime) -> lis
     return list(session.execute(stmt).scalars())
 
 
-def list_week(session: Session, anchor: Optional[date] = None) -> list[Event]:
+def list_week(session: Session, anchor: date | None = None) -> list[Event]:
     start, end = week_bounds(anchor)
     return list_events_between(session, start, end)
