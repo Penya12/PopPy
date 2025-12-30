@@ -24,6 +24,8 @@ class EventCreate(BaseModel):
     tags: list[str] = Field(default_factory=list)
     meta: dict[str, Any] = Field(default_factory=dict)
 
+    model_config = {"frozen": True}
+
 
 class EventRead(BaseModel):
     id: int
@@ -35,4 +37,4 @@ class EventRead(BaseModel):
     tags: list[str]
     meta: dict[str, Any]
 
-    model_config = {"from_attributes": True}
+    model_config = {"from_attributes": True, "frozen": True}

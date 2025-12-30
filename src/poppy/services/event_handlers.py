@@ -1,5 +1,4 @@
 """Manipulate event-related data and handle event-driven operations in PopPy."""
-# src/poppy/services/events.py
 from __future__ import annotations
 
 from datetime import date, datetime

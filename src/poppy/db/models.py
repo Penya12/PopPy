@@ -22,15 +22,12 @@ class Event(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
-
     kind: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     text: Mapped[str] = mapped_column(Text, nullable=False)
-
-    # Optional “decision-ish” info (fine to be nullable)
+    
+    # Optional fields
     why: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-
     source: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
-
     tags: Mapped[list[str]] = mapped_column(ARRAY(String(64)), nullable=False, default=list)
     meta: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
 
