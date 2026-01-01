@@ -4,7 +4,13 @@ from sqlalchemy.orm import Session
 
 from poppy.core.events import EventCreate
 from poppy.db.models import Event
-from poppy.services.event_handlers import create_event, list_events_between, list_week
+from poppy.services.event_handlers import (
+    create_event,
+    list_events_between,
+    list_todo,
+    list_todo_split_by_current_week,
+    list_week,
+)
 from poppy.services.utils import week_bounds
 
 
@@ -71,3 +77,78 @@ def test_list_week(db_session: Session) -> None:
     events_this_week = list_week(db_session)
     assert len(events_this_week) == 2
     assert [e.id for e in events_this_week] == [e2.id, e3.id]
+
+
+def test_list_todo_ignores_non_actions(db_session: Session) -> None:
+    now = datetime.now(UTC)
+    action_event = Event(
+        kind="action",
+        text="pending action",
+        due_at=now + timedelta(days=2),
+        completed_at=None
+    )
+    note_event = Event(kind="note", text="just a note")
+    idea_event = Event(kind="idea", text="just an idea")
+    db_session.add_all([action_event, note_event, idea_event])
+    db_session.commit()
+
+    # This should pass regardless of pending_only value, since it's the only action
+    [todo_action] = list_todo(db_session, pending_only=False)
+    assert todo_action.id == action_event.id
+
+
+def test_list_todo_pending_only(db_session: Session) -> None:
+    now = datetime.now(UTC)
+    pending_action = Event(
+        kind="action",
+        text="pending action",
+        due_at=now + timedelta(days=2),
+        completed_at=None
+    )
+    completed_action = Event(
+        kind="action",
+        text="completed action",
+        due_at=now - timedelta(days=1),
+        completed_at=now - timedelta(hours=1)
+    )
+    no_due_action = Event(
+        kind="action",
+        text="no due action",
+        due_at=None,
+        completed_at=None
+    )
+    db_session.add_all([pending_action, completed_action, no_due_action])
+    db_session.commit()
+
+    [todo_action] = list_todo(db_session)
+    assert todo_action.id == pending_action.id
+
+
+def test_todo_split_by_current_week(db_session: Session) -> None:
+    start_of_week, end_of_week = week_bounds()
+    this_week_action = Event(
+        kind="action",
+        text="created_this_week",
+        created_at=start_of_week + timedelta(days=1),
+        due_at=end_of_week + timedelta(days=2),
+        completed_at=None
+    )
+    later_action = Event(
+        kind="action",
+        text="created_last_week",
+        created_at=start_of_week - timedelta(days=3),
+        due_at=end_of_week + timedelta(days=3),
+        completed_at=None
+    )
+    note = Event(
+        kind="note",
+        text="just a note - should be ignored",
+    )
+    db_session.add_all([this_week_action, later_action, note])
+    db_session.commit()
+
+    split_todo = list_todo_split_by_current_week(db_session)
+    assert len(split_todo["created_this_week"]) == 1
+    assert split_todo["created_this_week"][0].id == this_week_action.id
+    assert len(split_todo["older"]) == 1
+    assert split_todo["older"][0].id == later_action.id

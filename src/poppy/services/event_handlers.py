@@ -6,7 +6,7 @@ from datetime import date, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from poppy.core.events import EventCreate
+from poppy.core.events import EventCreate, EventKind
 from poppy.db.models import Event
 from poppy.services.utils import week_bounds
 
@@ -43,3 +43,35 @@ def list_week(session: Session, anchor: date | None = None) -> list[Event]:
     """
     start, end = week_bounds(anchor)
     return list_events_between(session, start, end)
+
+
+def list_todo(session: Session, *, pending_only: bool = True) -> list[Event]:
+    """List all actions as a todo list.
+
+    If `pending_only` is True, only returns actions which are have a non-null `due_at`
+    and null `completed_at`.
+    """
+    # Actions are the only kind of event in todo list
+    stmt = select(Event).where(Event.kind == EventKind.action.value)
+
+    # Pending only = the event has a non-null `due_at`` field and null `completed_at` field
+    if pending_only:
+        stmt = stmt.where(Event.due_at.is_not(None)).where(Event.completed_at.is_(None))
+
+    stmt = stmt.order_by(Event.created_at.asc(), Event.id.asc())
+    return list(session.execute(stmt).scalars())
+
+
+def list_todo_split_by_current_week(session: Session) -> dict[str, list[Event]]:
+    """List all pending actions, split into 'this_week' and 'later' based on `created_at`."""
+    actions = list_todo(session, pending_only=True)
+    this_week_actions = []
+    later_actions = []
+    start_of_week, end_of_week = week_bounds()
+    for ev in actions:
+        if start_of_week <= ev.created_at < end_of_week:
+            this_week_actions.append(ev)
+        else:
+            later_actions.append(ev)
+
+    return {"created_this_week": this_week_actions, "older": later_actions}
