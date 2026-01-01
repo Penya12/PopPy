@@ -1,20 +1,11 @@
 """Skeleton setup required for the fastAPI app."""
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from datetime import date
-from typing import Annotated
 
-from fastapi import Depends, FastAPI, status
-from sqlalchemy.orm import Session
+from fastapi import FastAPI
 
-from poppy.core.events import EventCreate, EventRead
-from poppy.db.session import (
-    DATABASE_URL,
-    ENGINE,
-    get_db_connection,
-    init_db_engine_and_sessionmaker,
-)
-from poppy.services.event_handlers import create_event, list_week
+from poppy.api.routes.events import router as events_router
+from poppy.db.session import DATABASE_URL, ENGINE, init_db_engine_and_sessionmaker
 
 
 @asynccontextmanager
@@ -29,22 +20,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None, None]:  # noqa: A
 
 
 # FastAPI will do the equivalent of calling `with lifespan(app):` when using every endpoint
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(title="PopPy API", lifespan=lifespan)
+app.include_router(events_router)
 
 
 @app.get("/")
 def read_root() -> dict[str, str]:
     """Meant to be hit to check if the API is alive."""
     return {"Poppy": "Your Popeye-powered secretary"}
-
-
-@app.post("/event", status_code=status.HTTP_201_CREATED)
-def create_event_via_fastapi(payload: EventCreate, session: Annotated[Session, Depends(get_db_connection)]) -> EventRead:
-    """Thin wrapper around `create_event` for FastAPI."""
-    return create_event(session, payload)
-
-
-@app.get("/event/week")
-def get_events_in_week(session: Annotated[Session, Depends(get_db_connection)], anchor: date | None = None) -> list[EventRead]:
-    """Thin wrapper around `list_week` for FastAPI."""
-    return list_week(session, anchor=anchor)
