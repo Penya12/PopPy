@@ -7,7 +7,10 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+
 class EventKind(StrEnum):
+    """Allowed events."""
+
     action = auto()
     decision = auto()
     idea = auto()
@@ -17,6 +20,8 @@ class EventKind(StrEnum):
 
 
 class EventCreate(BaseModel):
+    """Controller (from MVC design) Used by both API and CLI to create events."""
+
     kind: EventKind
     text: str = Field(min_length=1)
     why: str | None = None
@@ -28,6 +33,8 @@ class EventCreate(BaseModel):
 
 
 class EventRead(BaseModel):
+    """Controller (from MVC design) Used by both API to send DB read events over HTTP."""
+
     id: int
     created_at: datetime
     kind: EventKind
