@@ -7,3 +7,4 @@ __pycache__/
 .mypy_cache/
 .env
 PopPy_Notes.md
+migrate_events_table.sh

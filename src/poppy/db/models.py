@@ -32,6 +32,8 @@ class Event(Base):
     source: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     tags: Mapped[list[str]] = mapped_column(ARRAY(String(64)), nullable=False, default=list)
     meta: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 EXPECTED_TABLES_IN_DB = {"events", "alembic_version"}

@@ -43,5 +43,7 @@ class EventRead(BaseModel):
     source: str | None
     tags: list[str]
     meta: dict[str, Any]
+    due_at: datetime | None
+    completed_at: datetime | None
 
     model_config = {"from_attributes": True, "frozen": True}
