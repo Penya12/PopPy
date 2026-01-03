@@ -7,10 +7,12 @@ from poppy.core.events import EventCreate
 from poppy.db.models import Event
 from poppy.services.event_handlers import (
     create_event,
+    get_event_by_id,
     list_events_between,
     list_todo,
     list_todo_split_by_current_week,
     list_week,
+    mark_event_completed,
 )
 from poppy.services.utils import week_bounds
 
@@ -51,6 +53,23 @@ def test_event_create_validation() -> None:
             tags=["meeting", "weekly"],
             meta={},
         )
+
+
+def test_get_event_by_id(db_session: Session) -> None:
+    payload = EventCreate(
+        kind="note",
+        text="Event for get by ID test",
+    )
+    created_event = create_event(db_session, payload)
+
+    fetched_event = get_event_by_id(db_session, created_event.id)
+    assert fetched_event is not None
+    assert fetched_event.id == created_event.id
+    assert fetched_event.text == created_event.text
+
+    # when ID is not present
+    non_existent_event = get_event_by_id(db_session, 999999)
+    assert non_existent_event is None
 
 
 def test_list_events_between(db_session: Session) -> None:
@@ -166,3 +185,27 @@ def test_todo_split_by_current_week(db_session: Session) -> None:
     assert split_todo["created_this_week"][0].id == this_week_action.id
     assert len(split_todo["older"]) == 1
     assert split_todo["older"][0].id == later_action.id
+
+
+def test_mark_event_completed(db_session: Session) -> None:
+    now = datetime.now(UTC)
+    action_event = Event(
+        kind="action",
+        text="pending action",
+        due_at=now + timedelta(days=2),
+        completed_at=None
+    )
+    db_session.add(action_event)
+    db_session.commit()
+
+    assert action_event.completed_at is None
+
+    completed_event = mark_event_completed(db_session, action_event.id)
+    assert completed_event.completed_at is not None
+
+    fetched_event = get_event_by_id(db_session, action_event.id)
+    assert fetched_event.id == action_event.id
+    assert fetched_event.completed_at == completed_event.completed_at
+
+    with pytest.raises(ValueError, match="Event with ID 999999 not found"):
+        mark_event_completed(db_session, 999999)

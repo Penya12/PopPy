@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from poppy.core.events import EventCreate, EventKind
 from poppy.db.models import Event
-from poppy.services.utils import week_bounds
+from poppy.services.utils import utcnow, week_bounds
 
 
 def create_event(session: Session, payload: EventCreate) -> Event:
@@ -26,6 +26,11 @@ def create_event(session: Session, payload: EventCreate) -> Event:
     session.commit()
     session.refresh(ev)
     return ev
+
+
+def get_event_by_id(session: Session, event_id: int) -> Event | None:
+    """Fetch an event by its ID."""
+    return session.get(Event, event_id)
 
 
 def list_events_between(session: Session, start: datetime, end: datetime) -> list[Event]:
@@ -76,3 +81,17 @@ def list_todo_split_by_current_week(session: Session) -> dict[str, list[Event]]:
             later_actions.append(ev)
 
     return {"created_this_week": this_week_actions, "older": later_actions}
+
+
+def mark_event_completed(session: Session, event_id: str, completed_at: datetime | None = None) -> Event:
+    """Mark an event as completed by setting its `completed_at` field."""
+    event = get_event_by_id(session, event_id)
+    if event is None:
+        msg = f"Event with ID {event_id} not found."
+        raise ValueError(msg)
+
+    event.completed_at = completed_at or utcnow()
+    session.add(event)
+    session.commit()
+    session.refresh(event)
+    return event
