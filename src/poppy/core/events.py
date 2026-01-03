@@ -5,7 +5,7 @@ from datetime import datetime
 from enum import StrEnum, auto
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class EventKind(StrEnum):
@@ -28,9 +28,17 @@ class EventCreate(BaseModel):
     source: str | None = None
     tags: list[str] = Field(default_factory=list)
     meta: dict[str, Any] = Field(default_factory=dict)
-    due_at: datetime | None
+    due_at: datetime | None = Field(default=None)
 
     model_config = {"frozen": True}
+
+    @model_validator(mode="after")
+    def check_due_at_for_meetings(self) -> EventCreate:
+        """Ensure that meetings have a due_at field set."""
+        if self.kind == EventKind.meeting and self.due_at is None:
+            error_msg = "Meetings must have a due_at field set."
+            raise ValueError(error_msg)
+        return self
 
 
 class EventRead(BaseModel):

@@ -1,5 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
+import pytest
 from sqlalchemy.orm import Session
 
 from poppy.core.events import EventCreate
@@ -37,6 +38,19 @@ def test_create_event(db_session: Session) -> None:
     assert fetched_event.tags == payload.tags
     assert fetched_event.meta == payload.meta
     assert fetched_event.created_at == created_event.created_at
+
+
+def test_event_create_validation() -> None:
+    # Test that creating a meeting without due_at raises a ValueError
+    with pytest.raises(ValueError, match="Meetings must have a due_at field set"):
+        EventCreate(
+            kind="meeting",
+            text="Team sync-up",
+            why="Weekly team meeting",
+            source="unit_test",
+            tags=["meeting", "weekly"],
+            meta={},
+        )
 
 
 def test_list_events_between(db_session: Session) -> None:
