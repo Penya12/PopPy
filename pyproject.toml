@@ -44,6 +44,7 @@ build-backend = "uv_build"
 extend-select = ["ALL"]
 ignore = [
     "A005", # shadowing stlib module names
+    "B008", # Does not allow default options as calls
     "D205", # Docstrings formatting
     "S101", # Assertion errors
     "S604", # usage of a parameter called 'shell'

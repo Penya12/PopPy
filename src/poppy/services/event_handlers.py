@@ -20,6 +20,7 @@ def create_event(session: Session, payload: EventCreate) -> Event:
         source=payload.source,
         tags=payload.tags,
         meta=payload.meta,
+        due_at=payload.due_at,
     )
     session.add(ev)
     session.commit()
@@ -48,7 +49,7 @@ def list_week(session: Session, anchor: date | None = None) -> list[Event]:
 def list_todo(session: Session, *, pending_only: bool = True) -> list[Event]:
     """List all actions as a todo list.
 
-    If `pending_only` is True, only returns actions which are have a non-null `due_at`
+    If `pending_only` is True, only returns actions which have a non-null `due_at`
     and null `completed_at`.
     """
     # Actions are the only kind of event in todo list

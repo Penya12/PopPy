@@ -28,6 +28,7 @@ class EventCreate(BaseModel):
     source: str | None = None
     tags: list[str] = Field(default_factory=list)
     meta: dict[str, Any] = Field(default_factory=dict)
+    due_at: datetime | None
 
     model_config = {"frozen": True}
 
